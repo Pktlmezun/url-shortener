@@ -4,28 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gocql/gocql"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
 	"log"
+	"url-shortener/pkg/models"
 )
 import _ "github.com/jackc/pgx/v5"
 
-type user struct {
-	id         int
-	username   string
-	email      string
-	password   string
-	urlCounter int
-}
-
-type userManager interface {
-	InsertUserIntoDatabase(user user) error
-	GetUserFromDatabase(id int) (user, error)
-	DeleteUserFromDatabase(id int) error
-	UpdateUserFromDatabase(user user) error
-	GetAllUsersFromDatabase() ([]user, error)
-}
+//type userManager interface {
+//	InsertUserIntoDatabase(user models.User) error
+//	GetUserFromDatabase(id int) ( models.User, error)
+//	DeleteUserFromDatabase(id int) error
+//	UpdateUserFromDatabase(user  models.User) error
+//	GetAllUsersFromDatabase() ([] models.User, error)
+//}
 
 func NewPostgres(username, password, host, port, dbName string) (*pgx.Conn, error) {
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, dbName)
@@ -45,17 +39,21 @@ func hashPassword(password string) ([]byte, error) {
 }
 
 func main() {
+	addUrl()
+
+	return
 	conn, err := NewPostgres("beka", "Beka2005", "localhost", "5432", "url_shortener")
 	if err != nil {
 		log.Fatalf("Error : %v", err)
 	}
-	newUser := user{
-		id:         1,
-		username:   "Bekaryss",
-		email:      "Beka123@gmail.com",
-		password:   "Beka2005",
-		urlCounter: 0,
+	newUser := models.User{
+		Id:         1,
+		Username:   "Bekaryss",
+		Email:      "Beka123@gmail.com",
+		Password:   "Beka2005",
+		UrlCounter: 0,
 	}
+
 	err = InsertUserIntoDatabase(conn, newUser)
 	if err != nil {
 		return
@@ -64,21 +62,52 @@ func main() {
 	defer conn.Close(context.Background())
 }
 
-func InsertUserIntoDatabase(conn *pgx.Conn, user user) error {
+func addUrl() {
+	cluster := gocql.NewCluster("localhost") // Replace with your Cassandra node(s)
+	cluster.Keyspace = "url_shortener"       // Replace with your keyspace
+	cluster.Consistency = gocql.Quorum
+	cluster.Authenticator = gocql.PasswordAuthenticator{
+		Username: "beka",     // Your Cassandra username
+		Password: "Beka2005", // Your Cassandra password
+	}
+
+	session, err := cluster.CreateSession()
+	if err != nil {
+		log.Fatalf("Failed to connect to Cassandra: %v", err)
+	}
+	defer session.Close()
+
+	new_url := models.Url{gocql.TimeUUID(), 1, "short", "long"}
+
+	// Insert the record
+	query := `
+        INSERT INTO urls (id, user_id, short_url, long_url) 
+        VALUES (?, ?, ?, ?)
+    `
+	err = session.Query(query, new_url.Id, new_url.UserId, new_url.ShortUrl, new_url.LongUrl).Exec()
+	if err != nil {
+		log.Fatalf("Failed to insert data into Cassandra: %v", err)
+	}
+
+	fmt.Println("Record added successfully!")
+
+}
+
+func InsertUserIntoDatabase(conn *pgx.Conn, user models.User) error {
 	// Define the SQL query to insert a new book record.
 	query := `
         INSERT INTO users (username, email, password, urlCounter) VALUES (@username, @email, @password, @urlCounter)
     `
 	// Define the named arguments for the query.
-	hashedPassword, err := hashPassword(user.password)
+	hashedPassword, err := hashPassword(user.Password)
 	if err != nil {
 		return err
 	}
 	args := pgx.NamedArgs{
-		"username":   user.username,
-		"email":      user.email,
+		"username":   user.Username,
+		"email":      user.Email,
 		"password":   string(hashedPassword),
-		"urlCounter": user.urlCounter,
+		"urlCounter": user.UrlCounter,
 	}
 	_, err = conn.Exec(context.Background(), query, args)
 	if err != nil {
