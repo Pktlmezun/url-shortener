@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"url-shortener/internal/services"
 	"url-shortener/pkg/models"
@@ -27,6 +28,12 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	hashedPassword, err := hashPassword(user.Password)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	user.Password = string(hashedPassword)
 	user.Id, err = h.Service.RegisterUser(user)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -39,8 +46,10 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-//type validateUser struct {
-//	Email    *string `json:"email"`
-//	Password *string `json:"password"`
-//	Username *string `json:"username"`
-//}
+func hashPassword(password string) ([]byte, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	return hashedPassword, nil
+}
