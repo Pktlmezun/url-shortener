@@ -2,26 +2,20 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gocql/gocql"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/jackc/pgx/v5"
-	"golang.org/x/crypto/bcrypt"
+	_ "github.com/lib/pq"
 	"log"
 	"net/http"
+	"url-shortener/config"
+	"url-shortener/internal/api"
+	"url-shortener/internal/db"
 	"url-shortener/pkg/models"
 )
 import _ "github.com/jackc/pgx/v5"
-
-//type userManager interface {
-//	InsertUserIntoDatabase(user models.User) error
-//	GetUserFromDatabase(id int) ( models.User, error)
-//	DeleteUserFromDatabase(id int) error
-//	UpdateUserFromDatabase(user  models.User) error
-//	GetAllUsersFromDatabase() ([] models.User, error)
-//}
 
 func NewPostgres(username, password, host, port, dbName string) (*pgx.Conn, error) {
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, dbName)
@@ -32,19 +26,16 @@ func NewPostgres(username, password, host, port, dbName string) (*pgx.Conn, erro
 	return conn, nil
 }
 
-func hashPassword(password string) ([]byte, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, err
-	}
-	return hashedPassword, nil
-}
-
 func main() {
-	http.HandleFunc("/hello", hello)
-	http.HandleFunc("/signup", createUser)
+	cfg := config.Load()
 
-	http.ListenAndServe(":8080", nil)
+	dbConn, err := db.ConnectPostgres(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	api.StartSever(cfg.ServerPort, dbConn)
+
+	//http.ListenAndServe(":8080", nil)
 
 	//addUrl()
 	//
@@ -69,33 +60,12 @@ func main() {
 	//defer conn.Close(context.Background())
 }
 
-func createUser(w http.ResponseWriter, r *http.Request) {
-	var user models.User
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&user)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-	}
-
-	conn, err := getConnection()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-	user.Id, err = InsertUserIntoDatabase(conn, user)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-	_ = json.NewEncoder(w).Encode(&user)
-	fmt.Println(user)
-	w.WriteHeader(http.StatusCreated)
-}
-
 func getConnection() (*pgx.Conn, error) {
-	conn, err := NewPostgres("beka", "Beka2005", "localhost", "5432", "url_shortener")
+	DB, err := NewPostgres("beka", "Beka2005", "localhost", "5432", "url_shortener")
 	if err != nil {
 		return nil, err
 	}
-	return conn, nil
+	return DB, nil
 }
 
 func addUrl() {
@@ -129,31 +99,6 @@ func addUrl() {
 
 }
 
-func InsertUserIntoDatabase(conn *pgx.Conn, user models.User) (int64, error) {
-	// Define the SQL query to insert a new book record.
-	query := `
-        INSERT INTO users (username, email, password, urlCounter) VALUES (@username, @email, @password, @urlCounter) RETURNING id
-    `
-	// Define the named arguments for the query.
-	hashedPassword, err := hashPassword(user.Password)
-	if err != nil {
-		return 0, err
-	}
-	args := pgx.NamedArgs{
-		"username":   user.Username,
-		"email":      user.Email,
-		"password":   string(hashedPassword),
-		"urlCounter": user.UrlCounter,
-	}
-	var id int64 = 0
-	conn.QueryRow(context.Background(), query, args).Scan(&id)
-	if id == 0 {
-		log.Println("Error Inserting user")
-		return 0, err
-	}
-	return id, nil
-}
-
 func applyMigrations(dsn string) {
 	migrationDir := "migrations" // Path to migration files
 	m, err := migrate.New(migrationDir, dsn)
@@ -170,3 +115,8 @@ func applyMigrations(dsn string) {
 func hello(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello, world!")
 }
+
+//
+//func connectToPostgres(dsn string) (*pgx.Conn, error) {
+//
+//}
