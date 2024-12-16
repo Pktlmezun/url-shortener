@@ -1,9 +1,9 @@
 package models
 
 type User struct {
-	Id         int
-	Username   string
-	Email      string
-	Password   string
-	UrlCounter int
+	Id         int64  `json:"id"`
+	Username   string `json:"username"`
+	Email      string `json:"email"`
+	Password   string `json:"password"`
+	UrlCounter int    `json:"url_counter"`
 }
