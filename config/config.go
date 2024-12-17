@@ -1,8 +1,8 @@
 package config
 
 import (
-	"fmt"
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 	"os"
 )
 
@@ -11,10 +11,12 @@ type Config struct {
 	ServerPort  string
 }
 
-func Load() *Config {
-	_ = godotenv.Load()
-
-	fmt.Println("in config", os.Getenv("SERVER_PORT"))
+func Load(logger *logrus.Logger) *Config {
+	err := godotenv.Load()
+	if err != nil {
+		logger.Fatalf("Error loading config file (.env)")
+	}
+	logger.Info("Successfully loaded config file")
 	return &Config{
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 		ServerPort:  os.Getenv("SERVER_PORT"),
