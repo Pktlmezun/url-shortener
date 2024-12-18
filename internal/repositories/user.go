@@ -33,18 +33,18 @@ func (r *UserRepository) InsertUser(user models.User) (int64, error) {
 	return id, nil
 }
 
-func (r *UserRepository) LoginUser(user *models.User) (models.User, error) {
+func (r *UserRepository) LoginUser(email string) (models.User, error) {
 	query := `
         SELECT id, username, password, email, urlCounter FROM users WHERE email = $1;
     `
 
 	//var dbPassword string
-	err := r.DB.QueryRow(query, user.Email).Scan(&user.Id, &user.Username, &user.Password, &user.Email, &user.UrlCounter)
-	fmt.Println("DB RES:", user)
+	var dbUser models.User
+	err := r.DB.QueryRow(query, email).Scan(&dbUser.Id, &dbUser.Username, &dbUser.Password, &dbUser.Email, &dbUser.UrlCounter)
 	if err != nil {
 		r.Logger.Error(err)
 		return models.User{}, err
 	}
 
-	return *user, nil
+	return dbUser, nil
 }

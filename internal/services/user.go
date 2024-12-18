@@ -24,10 +24,10 @@ func (s *UserService) RegisterUser(user models.User) (int64, error) {
 	return s.Repo.InsertUser(user)
 }
 
-func (s *UserService) LoginUser(user *models.User) (models.User, error) {
-	if user.Email == "" || user.Password == "" {
+func (s *UserService) LoginUser(email string) (models.User, error) {
+	if email == "" {
 		//s.Logger.Error("User registration failed, empty field(s)")
-		return models.User{}, errors.New("email or password is empty")
+		return models.User{}, errors.New("email is empty")
 	}
-	return s.Repo.LoginUser(user)
+	return s.Repo.LoginUser(email)
 }
