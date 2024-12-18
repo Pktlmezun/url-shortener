@@ -14,3 +14,7 @@ func ConnectPostgres(dbURL string, logger *logrus.Logger) (*sql.DB, error) {
 	logger.Info("Successfully connected to postgres")
 	return db, nil
 }
+
+func migratePostgres(db *sql.DB, logger *logrus.Logger) {
+
+}

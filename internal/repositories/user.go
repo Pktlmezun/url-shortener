@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/sirupsen/logrus"
 	"url-shortener/pkg/models"
 )
@@ -20,7 +19,6 @@ func (r *UserRepository) InsertUser(user models.User) (int64, error) {
 	query := `
         INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id
     `
-	fmt.Println("Repo", user)
 	var id int64 = 0
 	err := r.DB.QueryRow(query, user.Username, user.Email, user.Password).Scan(&id)
 	if err != nil {

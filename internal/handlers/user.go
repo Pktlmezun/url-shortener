@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"url-shortener/internal/auth"
@@ -47,7 +46,6 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func (h *UserHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.DecodeUser(r, h.Logger)
-	fmt.Println(user)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
@@ -59,7 +57,6 @@ func (h *UserHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(errors.New("invalid credentials").Error()))
 	}
 	err = auth.ValidatePassword(dbUser.Password, user.Password)
-	fmt.Println(dbUser.Password, user.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return

@@ -14,9 +14,7 @@ import (
 import _ "github.com/jackc/pgx/v5"
 
 func main() {
-	//p, _ := handlers.HashPassword("1234")
-	//fmt.Println(string(p))
-	//return
+
 	logger := logging.Init()
 	cfg := config.Load(logger)
 
@@ -28,33 +26,8 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	fmt.Println(cassandraSession)
-	return
-	server.StartSever(cfg.ServerPort, dbConn, logger)
+	server.StartSever(cfg.ServerPort, dbConn, cassandraSession, logger)
 
-	//http.ListenAndServe(":8080", nil)
-
-	//addUrl()
-	//
-	//return
-	//conn, err := NewPostgres("beka", "Beka2005", "localhost", "5432", "url_shortener")
-	//if err != nil {
-	//	log.Fatalf("Error : %v", err)
-	//}
-	//newUser := models.User{
-	//	Id:         1,
-	//	Username:   "Bekaryss",
-	//	Email:      "Beka123@gmail.com",
-	//	Password:   "Beka2005",
-	//	UrlCounter: 0,
-	//}
-	//
-	//err = InsertUserIntoDatabase(conn, newUser)
-	//if err != nil {
-	//	return
-	//}
-	//
-	//defer conn.Close(context.Background())
 }
 
 func addUrl() {

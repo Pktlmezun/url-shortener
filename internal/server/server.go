@@ -3,6 +3,7 @@ package server
 import (
 	"database/sql"
 	"fmt"
+	"github.com/gocql/gocql"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"url-shortener/internal/api"
@@ -11,15 +12,17 @@ import (
 	"url-shortener/internal/services"
 )
 
-func StartSever(port string, db *sql.DB, logger *logrus.Logger) {
+func StartSever(port string, db *sql.DB, session *gocql.Session, logger *logrus.Logger) {
 
 	userRepo := repositories.NewUserRepository(db, logger)
-
 	userService := services.NewUserService(userRepo, logger)
-
 	userHandler := handlers.NewUserHandler(userService, logger)
 
-	router := api.SetupRouter(userHandler, logger)
+	URLRepo := repositories.NewURLRepository(session, logger, db)
+	URLService := services.NewURLService(URLRepo, logger, db)
+	URLHandler := handlers.NewURLHandler(URLService, logger)
+
+	router := api.SetupRouter(userHandler, URLHandler, logger)
 
 	logger.Info("Server is running on port ", port)
 

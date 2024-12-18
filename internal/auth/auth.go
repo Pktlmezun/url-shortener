@@ -26,8 +26,7 @@ func CreateToken(userID int64, username string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id":  userID,
 		"username": username,
-
-		"exp": time.Now().Add(time.Hour * 24).Unix(),
+		"exp":      time.Now().Add(time.Hour * 24).Unix(),
 	})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
@@ -37,24 +36,44 @@ func CreateToken(userID int64, username string) (string, error) {
 	return tokenString, nil
 }
 
-func VerifyToken(tokenString string) error {
+func VerifyToken(tokenString string) (int64, error) {
 	err := godotenv.Load()
 	if err != nil {
-		return err
+		fmt.Println("SMTH NOT WORKING 3")
+
+		return 0, err
 	}
+	fmt.Printf("__%s\n", tokenString)
+	fmt.Println("TOKEN:", tokenString)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return os.Getenv("JWT_SECRET"), nil
+		fmt.Println("SMTH NOT WORKING 4")
+
+		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 
 	if err != nil {
-		return err
+		fmt.Println("SMTH NOT WORKING 2", err)
+		return 0, err
 	}
 
 	if !token.Valid {
-		return fmt.Errorf("invalid token")
-	}
+		fmt.Println("SMTH NOT WORKING 0")
 
-	return nil
+		return 0, fmt.Errorf("invalid token")
+	}
+	var userID float64
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		userID, ok = claims["user_id"].(float64)
+		if !ok {
+			return 0, fmt.Errorf("user_id not found in token")
+		}
+		fmt.Println()
+		return int64(userID), nil
+	}
+	fmt.Println("SMTH NOT WORKING")
+
+	return 0, fmt.Errorf("invalid token")
+
 }
 
 func DecodeUser(r *http.Request, logger *logrus.Logger) (models.User, error) {

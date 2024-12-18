@@ -8,7 +8,7 @@ import (
 	"url-shortener/internal/handlers"
 )
 
-func SetupRouter(userHandler *handlers.UserHandler, logger *logrus.Logger) http.Handler {
+func SetupRouter(userHandler *handlers.UserHandler, urlHandler *handlers.URLHandler, logger *logrus.Logger) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/signup", func(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +30,26 @@ func SetupRouter(userHandler *handlers.UserHandler, logger *logrus.Logger) http.
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
+		logger.WithFields(logrus.Fields{
+			"method":     r.Method,
+			"endpoint":   "/login",
+			"request_id": fmt.Sprintf("%d", os.Getpid()),
+			"data":       r.Body,
+		}).Info("Login endpoint hit")
 		userHandler.LoginUser(w, r)
+	})
+
+	mux.HandleFunc("/url", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+		logger.WithFields(logrus.Fields{
+			"method":     r.Method,
+			"endpoint":   "/url",
+			"request_id": fmt.Sprintf("%d", os.Getpid()),
+			"data":       r.Body,
+		}).Info("url endpoint hit")
+		urlHandler.AddURL(w, r)
 	})
 
 	return mux
