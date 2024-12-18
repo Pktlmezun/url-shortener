@@ -24,6 +24,12 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
+	cassandraSession, err := db.ConnectCassandra(logger, &cfg.Cassandra)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	fmt.Println(cassandraSession)
+	return
 	server.StartSever(cfg.ServerPort, dbConn, logger)
 
 	//http.ListenAndServe(":8080", nil)
