@@ -35,8 +35,6 @@ func (r *UserRepository) LoginUser(email string) (models.User, error) {
 	query := `
         SELECT id, username, password, email, urlCounter FROM users WHERE email = $1;
     `
-
-	//var dbPassword string
 	var dbUser models.User
 	err := r.DB.QueryRow(query, email).Scan(&dbUser.Id, &dbUser.Username, &dbUser.Password, &dbUser.Email, &dbUser.UrlCounter)
 	if err != nil {

@@ -53,12 +53,26 @@ func (r *URLRepository) GetURL(url models.Url) (string, error) {
 	return longUrl, nil
 }
 
+func (r *URLRepository) DeleteURL(url models.Url) error {
+	query := `
+		DELETE FROM url_shortener.urls WHERE user_id=? AND short_url=?;
+		`
+
+	err := r.Session.Query(query, url.UserId, url.ShortUrl).Exec()
+	if err != nil {
+		r.Logger.Error("error deleting the url, :", err)
+		return err
+	}
+	r.Logger.Info("Successfully deleted url cassandra")
+	return nil
+}
+
 func (r *URLRepository) GetMyURLs(userID int64) ([]models.Url, error) {
 	query := `
 	   SELECT user_id, short_url, long_url FROM urls WHERE user_id = ?
    `
 	rows := r.Session.Query(query, userID).Iter()
-	var URLs []models.Url
+	URLs := []models.Url{}
 	var url models.Url
 	for rows.Scan(&url.UserId, &url.ShortUrl, &url.LongUrl) {
 		URLs = append(URLs, url)

@@ -26,7 +26,7 @@ func (s *UserService) RegisterUser(user models.User) (int64, error) {
 
 func (s *UserService) LoginUser(email string) (models.User, error) {
 	if email == "" {
-		//s.Logger.Error("User registration failed, empty field(s)")
+		s.Logger.Error("User login failed, empty field")
 		return models.User{}, errors.New("email is empty")
 	}
 	return s.Repo.LoginUser(email)

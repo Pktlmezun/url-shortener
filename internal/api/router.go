@@ -50,6 +50,7 @@ func SetupRouter(userHandler *handlers.UserHandler, urlHandler *handlers.URLHand
 			"data":       r.Body,
 		}).Info("url endpoint hit")
 		urlHandler.AddURL(w, r)
+
 	})
 
 	mux.HandleFunc("/my_urls", func(w http.ResponseWriter, r *http.Request) {
@@ -66,17 +67,26 @@ func SetupRouter(userHandler *handlers.UserHandler, urlHandler *handlers.URLHand
 	})
 
 	mux.HandleFunc("/{short_url}", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
+		shortUrl := r.URL.Path[1:]
+		if r.Method == http.MethodGet {
+			logger.WithFields(logrus.Fields{
+				"method":     r.Method,
+				"endpoint":   "/{short_url}",
+				"request_id": fmt.Sprintf("%d", os.Getpid()),
+				"data":       r.Body,
+			}).Info("short_url endpoint hit")
+			urlHandler.GetURL(w, r, shortUrl)
+		} else if r.Method == http.MethodDelete {
+			logger.WithFields(logrus.Fields{
+				"method":     r.Method,
+				"endpoint":   "/url",
+				"request_id": fmt.Sprintf("%d", os.Getpid()),
+				"data":       r.Body,
+			}).Info("url endpoint hit")
+			urlHandler.DeleteURL(w, r, shortUrl)
+		} else {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
-		logger.WithFields(logrus.Fields{
-			"method":     r.Method,
-			"endpoint":   "/{short_url}",
-			"request_id": fmt.Sprintf("%d", os.Getpid()),
-			"data":       r.Body,
-		}).Info("short_url endpoint hit")
-		shortUrl := r.URL.Path[1:]
-		urlHandler.GetURL(w, r, shortUrl)
 	})
 
 	return mux

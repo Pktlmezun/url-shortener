@@ -91,6 +91,35 @@ func (h *URLHandler) GetURL(w http.ResponseWriter, r *http.Request, shortUrl str
 	//http.Redirect(w, r, longURL, http.StatusMovedPermanently)
 }
 
+func (h *URLHandler) DeleteURL(w http.ResponseWriter, r *http.Request, shortUrl string) {
+	token, err := splitToken(r, h.Logger)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("Invalid token"))
+		return
+	}
+
+	id, err := auth.VerifyToken(token)
+
+	if err != nil {
+		h.Logger.Error("Invalid token")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("Invalid token"))
+		return
+	}
+	var URL models.Url
+	URL.UserId = id
+	URL.ShortUrl = shortUrl
+	err = h.Service.DeleteURL(URL)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	response := map[string]string{"message": "URL deleted"}
+	_ = json.NewEncoder(w).Encode(response)
+}
+
 func (h *URLHandler) GetMyURLs(w http.ResponseWriter, r *http.Request) {
 	token, err := splitToken(r, h.Logger)
 	if err != nil {

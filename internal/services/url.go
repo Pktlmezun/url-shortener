@@ -48,6 +48,14 @@ func (s *URLService) GetURL(url models.Url) (string, error) {
 	return s.URLRepo.GetURL(url)
 }
 
+func (s *URLService) DeleteURL(url models.Url) error {
+	if url.ShortUrl == "" {
+		s.Logger.Error("empty short url")
+		return errors.New("short url is empty")
+	}
+	return s.URLRepo.DeleteURL(url)
+}
+
 func (s *URLService) GetMyURLs(userID int64) ([]models.Url, error) {
 	if userID == 0 {
 		s.Logger.Error("0 userID")
