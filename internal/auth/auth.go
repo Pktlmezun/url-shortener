@@ -41,8 +41,6 @@ func VerifyToken(tokenString string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	fmt.Printf("__%s\n", tokenString)
-	fmt.Println("TOKEN:", tokenString)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
@@ -75,7 +73,6 @@ func DecodeUser(r *http.Request, logger *logrus.Logger) (models.User, error) {
 		return models.User{}, err
 	}
 	logger.Info("Successfully decoded user model")
-	//fmt.Println("decode:", usernam)
 	return user, nil
 }
 

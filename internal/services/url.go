@@ -45,8 +45,15 @@ func (s *URLService) GetURL(url models.Url) (string, error) {
 		s.Logger.Error("empty url")
 		return "", errors.New("url is empty")
 	}
-	//return "", nil
 	return s.URLRepo.GetURL(url)
+}
+
+func (s *URLService) GetMyURLs(userID int64) ([]models.Url, error) {
+	if userID == 0 {
+		s.Logger.Error("0 userID")
+		return nil, errors.New("userID is empty")
+	}
+	return s.URLRepo.GetMyURLs(userID)
 }
 
 func generateShortUrl(counter int) string {

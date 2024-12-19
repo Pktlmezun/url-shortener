@@ -3,7 +3,6 @@ package repositories
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/gocql/gocql"
 	"github.com/sirupsen/logrus"
 	"url-shortener/pkg/models"
@@ -41,7 +40,6 @@ func (r *URLRepository) GetURL(url models.Url) (string, error) {
 	query := `
 	   SELECT long_url FROM urls WHERE user_id = ? AND short_url = ?
    `
-	fmt.Println(url)
 	rows := r.Session.Query(query, url.UserId, url.ShortUrl).Iter()
 	var longUrl string
 	for rows.Scan(&longUrl) {
@@ -53,6 +51,20 @@ func (r *URLRepository) GetURL(url models.Url) (string, error) {
 	}
 	r.Logger.Info("Successfully queried url to cassandra")
 	return longUrl, nil
+}
+
+func (r *URLRepository) GetMyURLs(userID int64) ([]models.Url, error) {
+	query := `
+	   SELECT user_id, short_url, long_url FROM urls WHERE user_id = ?
+   `
+	rows := r.Session.Query(query, userID).Iter()
+	var URLs []models.Url
+	var url models.Url
+	for rows.Scan(&url.UserId, &url.ShortUrl, &url.LongUrl) {
+		URLs = append(URLs, url)
+	}
+	r.Logger.Info("Successfully queried find my urls to cassandra")
+	return URLs, nil
 }
 
 func (r *URLRepository) GetCounter() (int, error) {

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
@@ -23,15 +24,12 @@ func NewURLHandler(service *services.URLService, logger *logrus.Logger) *URLHand
 }
 
 func (h *URLHandler) AddURL(w http.ResponseWriter, r *http.Request) {
-	reqToken := r.Header.Get("Authorization")
-	splitToken := strings.Split(reqToken, "Bearer")
-	if len(splitToken) != 2 {
-		h.Logger.Error("Invalid token format")
+	token, err := splitToken(r, h.Logger)
+	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("Invalid token format"))
+		w.Write([]byte("Invalid token"))
 		return
 	}
-	token := strings.TrimSpace(splitToken[1])
 
 	id, err := auth.VerifyToken(token)
 
@@ -63,15 +61,12 @@ func (h *URLHandler) AddURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *URLHandler) GetURL(w http.ResponseWriter, r *http.Request, shortUrl string) {
-	reqToken := r.Header.Get("Authorization")
-	splitToken := strings.Split(reqToken, "Bearer")
-	if len(splitToken) != 2 {
-		h.Logger.Error("Invalid token format")
+	token, err := splitToken(r, h.Logger)
+	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("Invalid token format"))
+		w.Write([]byte("Invalid token"))
 		return
 	}
-	token := strings.TrimSpace(splitToken[1])
 
 	id, err := auth.VerifyToken(token)
 
@@ -94,4 +89,41 @@ func (h *URLHandler) GetURL(w http.ResponseWriter, r *http.Request, shortUrl str
 	response := map[string]string{"message": "URL retrieved", "long_url": longURL}
 	_ = json.NewEncoder(w).Encode(response)
 	//http.Redirect(w, r, longURL, http.StatusMovedPermanently)
+}
+
+func (h *URLHandler) GetMyURLs(w http.ResponseWriter, r *http.Request) {
+	token, err := splitToken(r, h.Logger)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("Invalid token"))
+		return
+	}
+
+	id, err := auth.VerifyToken(token)
+
+	if err != nil {
+		h.Logger.Error("Invalid token")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("Invalid token"))
+		return
+	}
+
+	urls, err := h.Service.GetMyURLs(id)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+	}
+	_ = json.NewEncoder(w).Encode(urls)
+
+}
+
+func splitToken(r *http.Request, logger *logrus.Logger) (string, error) {
+	reqToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, "Bearer")
+	if len(splitToken) != 2 {
+		logger.Error("invalid token format")
+		return "", errors.New("invalid token format")
+	}
+	token := strings.TrimSpace(splitToken[1])
+	return token, nil
 }
