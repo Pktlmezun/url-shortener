@@ -61,3 +61,37 @@ func (h *URLHandler) AddURL(w http.ResponseWriter, r *http.Request) {
 	response := map[string]string{"message": "URL added", "short_url": shortUrl}
 	_ = json.NewEncoder(w).Encode(response)
 }
+
+func (h *URLHandler) GetURL(w http.ResponseWriter, r *http.Request, shortUrl string) {
+	reqToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, "Bearer")
+	if len(splitToken) != 2 {
+		h.Logger.Error("Invalid token format")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("Invalid token format"))
+		return
+	}
+	token := strings.TrimSpace(splitToken[1])
+
+	id, err := auth.VerifyToken(token)
+
+	if err != nil {
+		h.Logger.Error("Invalid token")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("Invalid token"))
+		return
+	}
+
+	var URL models.Url
+	URL.UserId = id
+	URL.ShortUrl = shortUrl
+	longURL, err := h.Service.GetURL(URL)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	response := map[string]string{"message": "URL retrieved", "long_url": longURL}
+	_ = json.NewEncoder(w).Encode(response)
+	//http.Redirect(w, r, longURL, http.StatusMovedPermanently)
+}

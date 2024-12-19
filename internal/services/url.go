@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/deatil/go-encoding/base62"
-	"github.com/gocql/gocql"
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"strconv"
 	"url-shortener/internal/repositories"
@@ -34,13 +32,21 @@ func (s *URLService) AddURL(url *models.Url) (string, error) {
 		return "", err
 	}
 	url.ShortUrl = generateShortUrl(counter)
-	url.Id = generateUUID()
 	err = s.URLRepo.AddUrl(url)
 	if err != nil {
 		return "", err
 	}
 
 	return url.ShortUrl, nil
+}
+
+func (s *URLService) GetURL(url models.Url) (string, error) {
+	if url.ShortUrl == "" {
+		s.Logger.Error("empty url")
+		return "", errors.New("url is empty")
+	}
+	//return "", nil
+	return s.URLRepo.GetURL(url)
 }
 
 func generateShortUrl(counter int) string {
@@ -51,10 +57,4 @@ func generateShortUrl(counter int) string {
 	encodedStr := string(encoder.Encode([]byte(numStr)))
 
 	return encodedStr
-}
-
-func generateUUID() gocql.UUID {
-	newUUID := uuid.New()
-	gocqlUUID := gocql.UUID(newUUID)
-	return gocqlUUID
 }

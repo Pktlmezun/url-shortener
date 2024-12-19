@@ -52,5 +52,19 @@ func SetupRouter(userHandler *handlers.UserHandler, urlHandler *handlers.URLHand
 		urlHandler.AddURL(w, r)
 	})
 
+	mux.HandleFunc("/{short_url}", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+		logger.WithFields(logrus.Fields{
+			"method":     r.Method,
+			"endpoint":   "/{short_url}",
+			"request_id": fmt.Sprintf("%d", os.Getpid()),
+			"data":       r.Body,
+		}).Info("short_url endpoint hit")
+		short_url := r.URL.Path[1:]
+		urlHandler.GetURL(w, r, short_url)
+	})
+
 	return mux
 }

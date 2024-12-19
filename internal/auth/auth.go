@@ -39,26 +39,19 @@ func CreateToken(userID int64, username string) (string, error) {
 func VerifyToken(tokenString string) (int64, error) {
 	err := godotenv.Load()
 	if err != nil {
-		fmt.Println("SMTH NOT WORKING 3")
-
 		return 0, err
 	}
 	fmt.Printf("__%s\n", tokenString)
 	fmt.Println("TOKEN:", tokenString)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		fmt.Println("SMTH NOT WORKING 4")
-
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 
 	if err != nil {
-		fmt.Println("SMTH NOT WORKING 2", err)
 		return 0, err
 	}
 
 	if !token.Valid {
-		fmt.Println("SMTH NOT WORKING 0")
-
 		return 0, fmt.Errorf("invalid token")
 	}
 	var userID float64
@@ -67,11 +60,8 @@ func VerifyToken(tokenString string) (int64, error) {
 		if !ok {
 			return 0, fmt.Errorf("user_id not found in token")
 		}
-		fmt.Println()
 		return int64(userID), nil
 	}
-	fmt.Println("SMTH NOT WORKING")
-
 	return 0, fmt.Errorf("invalid token")
 
 }
