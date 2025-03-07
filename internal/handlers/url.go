@@ -3,12 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
 	"url-shortener/internal/auth"
 	"url-shortener/internal/services"
 	"url-shortener/pkg/models"
+
+	"github.com/sirupsen/logrus"
 )
 
 type URLHandler struct {
@@ -40,7 +41,7 @@ func (h *URLHandler) AddURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var URL models.Url
+	var URL models.AddUrl
 	decoder := json.NewDecoder(r.Body)
 	err = decoder.Decode(&URL)
 	if err != nil {

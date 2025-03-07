@@ -3,11 +3,12 @@ package services
 import (
 	"database/sql"
 	"errors"
-	"github.com/deatil/go-encoding/base62"
-	"github.com/sirupsen/logrus"
 	"strconv"
 	"url-shortener/internal/repositories"
 	"url-shortener/pkg/models"
+
+	"github.com/deatil/go-encoding/base62"
+	"github.com/sirupsen/logrus"
 )
 
 type URLService struct {
@@ -22,7 +23,7 @@ func NewURLService(urlRepo *repositories.URLRepository, logger *logrus.Logger, d
 	}
 }
 
-func (s *URLService) AddURL(url *models.Url) (string, error) {
+func (s *URLService) AddURL(url *models.AddUrl) (string, error) {
 	if url.LongUrl == "" {
 		s.Logger.Error("empty url")
 		return "", errors.New("url is empty")
@@ -31,12 +32,15 @@ func (s *URLService) AddURL(url *models.Url) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	url.ShortUrl = generateShortUrl(counter)
+	if url.CustomAllias != "" && s.URLRepo.IsShortURL(url.CustomAllias) {
+		url.ShortUrl = url.CustomAllias
+	} else {
+		url.ShortUrl = generateShortUrl(counter)
+	}
 	err = s.URLRepo.AddUrl(url)
 	if err != nil {
 		return "", err
 	}
-
 	return url.ShortUrl, nil
 }
 

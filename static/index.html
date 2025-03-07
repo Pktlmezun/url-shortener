@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>URL Shortener</title>
+        <style>
+            :root {
+                --primary: #3498db;
+                --secondary: #2980b9;
+                --success: #2ecc71;
+                --danger: #e74c3c;
+                --light: #f8f9fa;
+                --dark: #343a40;
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            }
+
+            body {
+                background-color: #f5f5f5;
+                color: #333;
+                line-height: 1.6;
+            }
+
+            .container {
+                max-width: 1000px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+
+            header {
+                background-color: var(--primary);
+                color: white;
+                padding: 1rem;
+                text-align: center;
+                border-radius: 5px;
+                margin-bottom: 2rem;
+            }
+
+            .auth-container {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 2rem;
+                gap: 20px;
+            }
+
+            .card {
+                background-color: white;
+                border-radius: 5px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                padding: 1.5rem;
+                flex: 1;
+            }
+
+            h2 {
+                margin-bottom: 1rem;
+                color: var(--dark);
+            }
+
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: 600;
+            }
+
+            input[type="text"],
+            input[type="email"],
+            input[type="password"],
+            input[type="url"] {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 16px;
+            }
+
+            button {
+                background-color: var(--primary);
+                color: white;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 16px;
+                transition: background-color 0.3s;
+            }
+
+            button:hover {
+                background-color: var(--secondary);
+            }
+
+            .btn-danger {
+                background-color: var(--danger);
+            }
+
+            .btn-danger:hover {
+                background-color: #c0392b;
+            }
+
+            .url-form {
+                margin-bottom: 2rem;
+            }
+
+            .url-list {
+                margin-top: 2rem;
+            }
+
+            .url-item {
+                background-color: white;
+                padding: 1rem;
+                border-radius: 5px;
+                margin-bottom: 1rem;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .url-info {
+                flex: 1;
+            }
+
+            .shortened-url {
+                color: var(--primary);
+                font-weight: 600;
+                word-break: break-all;
+            }
+
+            .original-url {
+                color: #666;
+                font-size: 0.9rem;
+                word-break: break-all;
+            }
+
+            .copy-btn {
+                margin-left: 10px;
+                padding: 5px 10px;
+                font-size: 14px;
+            }
+
+            .action-buttons {
+                display: flex;
+                gap: 10px;
+            }
+
+            .hidden {
+                display: none;
+            }
+
+            .notification {
+                padding: 10px;
+                margin-bottom: 1rem;
+                border-radius: 4px;
+                text-align: center;
+            }
+
+            .success {
+                background-color: #d4edda;
+                color: #155724;
+            }
+
+            .error {
+                background-color: #f8d7da;
+                color: #721c24;
+            }
+
+            .loading {
+                text-align: center;
+                padding: 1rem;
+            }
+
+            .tabs {
+                display: flex;
+                margin-bottom: 2rem;
+            }
+
+            .tab {
+                padding: 10px 20px;
+                background-color: #ddd;
+                cursor: pointer;
+            }
+
+            .tab.active {
+                background-color: var(--primary);
+                color: white;
+            }
+
+            .tab-content {
+                display: none;
+            }
+
+            .tab-content.active {
+                display: block;
+            }
+
+            @media (max-width: 768px) {
+                .auth-container {
+                    flex-direction: column;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>URL Shortener</h1>
+            </header>
+
+            <div id="notification" class="notification hidden"></div>
+
+            <div id="auth-view">
+                <div class="tabs">
+                    <div class="tab active" data-tab="login">Login</div>
+                    <div class="tab" data-tab="signup">Sign Up</div>
+                </div>
+
+                <div class="tab-content active" id="login-tab">
+                    <div class="card">
+                        <h2>Login</h2>
+                        <form id="login-form">
+                            <div class="form-group">
+                                <label for="login-email">Email</label>
+                                <input type="email" id="login-email" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="login-password">Password</label>
+                                <input
+                                    type="password"
+                                    id="login-password"
+                                    required
+                                />
+                            </div>
+                            <button type="submit">Login</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="signup-tab">
+                    <div class="card">
+                        <h2>Sign Up</h2>
+                        <form id="signup-form">
+                            <div class="form-group">
+                                <label for="signup-username">Username</label>
+                                <input
+                                    type="text"
+                                    id="signup-username"
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label for="signup-email">Email</label>
+                                <input
+                                    type="email"
+                                    id="signup-email"
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label for="signup-password">Password</label>
+                                <input
+                                    type="password"
+                                    id="signup-password"
+                                    required
+                                />
+                            </div>
+                            <button type="submit">Sign Up</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="app-view" class="hidden">
+                <div class="card url-form">
+                    <h2>Shorten a URL</h2>
+                    <form id="url-form">
+                        <div class="form-group">
+                            <label for="long-url">Enter a long URL</label>
+                            <input
+                                type="url"
+                                id="long-url"
+                                placeholder="https://example.com/long-url"
+                                required
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label for="custom-alias"
+                                >Custom Alias (optional)</label
+                            >
+                            <input
+                                type="text"
+                                id="custom-alias"
+                                placeholder="e.g., my-link"
+                            />
+                        </div>
+                        <button type="submit">Shorten URL</button>
+                    </form>
+                </div>
+
+                <div class="url-list">
+                    <h2>Your Shortened URLs</h2>
+                    <div id="urls-container"></div>
+                    <div id="loading" class="loading hidden">
+                        Loading your URLs...
+                    </div>
+                    <div id="no-urls" class="hidden">
+                        You don't have any shortened URLs yet.
+                    </div>
+                </div>
+
+                <button
+                    id="logout-btn"
+                    class="btn-danger"
+                    style="margin-top: 2rem"
+                >
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <script>
+            // DOM Elements
+            const authView = document.getElementById("auth-view");
+            const appView = document.getElementById("app-view");
+            const notificationEl = document.getElementById("notification");
+            const loginForm = document.getElementById("login-form");
+            const signupForm = document.getElementById("signup-form");
+            const urlForm = document.getElementById("url-form");
+            const urlsContainer = document.getElementById("urls-container");
+            const loadingEl = document.getElementById("loading");
+            const noUrlsEl = document.getElementById("no-urls");
+            const logoutBtn = document.getElementById("logout-btn");
+
+            // Tab handling
+            const tabs = document.querySelectorAll(".tab");
+            tabs.forEach((tab) => {
+                tab.addEventListener("click", () => {
+                    // Remove active class from all tabs and contents
+                    tabs.forEach((t) => t.classList.remove("active"));
+                    document
+                        .querySelectorAll(".tab-content")
+                        .forEach((content) => {
+                            content.classList.remove("active");
+                        });
+
+                    // Add active class to clicked tab and corresponding content
+                    tab.classList.add("active");
+                    const tabId = `${tab.dataset.tab}-tab`;
+                    document.getElementById(tabId).classList.add("active");
+                });
+            });
+
+            // Auth state
+            let token = localStorage.getItem("token");
+
+            // Check if user is logged in
+            if (token) {
+                showAppView();
+                fetchUserUrls();
+            } else {
+                showAuthView();
+            }
+
+            // Show notification
+            function showNotification(message, type) {
+                notificationEl.textContent = message;
+                notificationEl.className = `notification ${type}`;
+
+                setTimeout(() => {
+                    notificationEl.classList.add("hidden");
+                }, 3000);
+            }
+
+            // Show app view
+            function showAppView() {
+                authView.classList.add("hidden");
+                appView.classList.remove("hidden");
+            }
+
+            // Show auth view
+            function showAuthView() {
+                authView.classList.remove("hidden");
+                appView.classList.add("hidden");
+            }
+
+            // API request helper function
+            async function apiRequest(endpoint, method, data = null) {
+                const headers = {
+                    "Content-Type": "application/json",
+                };
+
+                if (token) {
+                    headers["Authorization"] = `Bearer ${token}`;
+                }
+
+                const config = {
+                    method,
+                    headers,
+                };
+
+                if (data) {
+                    config.body = JSON.stringify(data);
+                }
+
+                try {
+                    const response = await fetch(endpoint, config);
+
+                    // Debug the raw response
+                    const rawText = await response.text();
+                    console.log("Raw API response:", rawText);
+
+                    // Try to parse it as JSON
+                    let result;
+                    try {
+                        result = JSON.parse(rawText);
+                    } catch (parseError) {
+                        console.error("JSON Parse Error:", parseError);
+                        throw new Error("Invalid response format from server");
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(result.message || "An error occurred");
+                    }
+
+                    return result;
+                } catch (error) {
+                    throw error;
+                }
+            }
+
+            // Signup form submission
+            signupForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const username =
+                    document.getElementById("signup-username").value;
+                const email = document.getElementById("signup-email").value;
+                const password =
+                    document.getElementById("signup-password").value;
+
+                try {
+                    const result = await apiRequest("/signup", "POST", {
+                        username,
+                        email,
+                        password,
+                    });
+
+                    showNotification(
+                        "Account created successfully! Please log in.",
+                        "success",
+                    );
+
+                    // Reset form
+                    signupForm.reset();
+
+                    // Switch to login tab
+                    tabs[0].click();
+                } catch (error) {
+                    showNotification(
+                        error.message || "Failed to create account",
+                        "error",
+                    );
+                }
+            });
+
+            // Login form submission
+            loginForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const email = document.getElementById("login-email").value;
+                const password =
+                    document.getElementById("login-password").value;
+
+                try {
+                    const result = await apiRequest("/login", "POST", {
+                        email,
+                        password,
+                    });
+
+                    token = result.token;
+                    localStorage.setItem("token", token);
+
+                    showNotification("Logged in successfully!", "success");
+                    showAppView();
+                    fetchUserUrls();
+
+                    // Reset form
+                    loginForm.reset();
+                } catch (error) {
+                    showNotification(
+                        error.message || "Failed to log in",
+                        "error",
+                    );
+                }
+            });
+
+            // URL form submission
+            urlForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const longUrl = document.getElementById("long-url").value;
+                const customAlias =
+                    document.getElementById("custom-alias").value;
+
+                try {
+                    const data = {
+                        long_url: longUrl,
+                    };
+
+                    if (customAlias) {
+                        data.custom_allias = customAlias;
+                    }
+
+                    const result = await apiRequest("/url", "POST", data);
+
+                    showNotification("URL shortened successfully!", "success");
+
+                    // Reset form
+                    urlForm.reset();
+
+                    // Refresh URLs
+                    fetchUserUrls();
+                } catch (error) {
+                    showNotification(
+                        error.message || "Failed to shorten URL",
+                        "error",
+                    );
+                }
+            });
+
+            // Fetch user's URLs
+            async function fetchUserUrls() {
+                loadingEl.classList.remove("hidden");
+                urlsContainer.innerHTML = "";
+                noUrlsEl.classList.add("hidden");
+
+                try {
+                    const urls = await apiRequest("/my_urls", "GET");
+
+                    loadingEl.classList.add("hidden");
+
+                    if (urls.length === 0) {
+                        noUrlsEl.classList.remove("hidden");
+                        return;
+                    }
+
+                    // Display URLs
+                    urls.forEach((url) => {
+                        const urlItem = createUrlItem(url);
+                        urlsContainer.appendChild(urlItem);
+                    });
+                } catch (error) {
+                    loadingEl.classList.add("hidden");
+                    showNotification(
+                        error.message || "Failed to fetch URLs",
+                        "error",
+                    );
+                }
+            }
+
+            // Create URL item element
+            function createUrlItem(url) {
+                const urlItem = document.createElement("div");
+                urlItem.className = "url-item";
+
+                const baseUrl = window.location.origin;
+                const shortUrl = `${baseUrl}/${url.short_url}`;
+
+                urlItem.innerHTML = `
+                      <div class="url-info">
+                          <div class="shortened-url">
+                              <a href="#" class="auth-redirect-link" data-url="${url.short_url}">${shortUrl}</a>
+                          </div>
+                          <div class="original-url">${url.long_url}</div>
+                          <div>Clicks: ${url.clicks || 0}</div>
+                      </div>
+                      <div class="action-buttons">
+                          <button class="copy-btn" data-url="${shortUrl}">Copy</button>
+                          <button class="btn-danger delete-btn" data-id="${url.short_url}">Delete</button>
+                      </div>
+                  `;
+
+                // Add authenticated redirection
+                urlItem
+                    .querySelector(".auth-redirect-link")
+                    .addEventListener("click", async (e) => {
+                        e.preventDefault();
+                        const shortCode = e.target.dataset.url;
+
+                        try {
+                            console.log(shortCode);
+
+                            // Make authenticated request to get the actual destination
+                            const result = await apiRequest(
+                                `/${shortCode}`,
+                                "GET",
+                            );
+                            // Redirect to the destination URL
+                            if (result && result.long_url) {
+                                window.open(result.long_url, "_blank");
+                            } else {
+                                showNotification(
+                                    "Failed to resolve URL",
+                                    "error",
+                                );
+                            }
+                        } catch (error) {
+                            showNotification(
+                                error.message || "Failed to access URL",
+                                "error",
+                            );
+                        }
+                    });
+
+                // Copy button event listener
+                urlItem
+                    .querySelector(".copy-btn")
+                    .addEventListener("click", (e) => {
+                        const url = e.target.dataset.url;
+                        navigator.clipboard
+                            .writeText(url)
+                            .then(() => {
+                                showNotification(
+                                    "URL copied to clipboard",
+                                    "success",
+                                );
+                            })
+                            .catch(() => {
+                                showNotification("Failed to copy URL", "error");
+                            });
+                    });
+
+                // Delete button event listener
+                urlItem
+                    .querySelector(".delete-btn")
+                    .addEventListener("click", async (e) => {
+                        const id = e.target.dataset.id;
+
+                        try {
+                            await apiRequest(`/${id}`, "DELETE");
+                            showNotification(
+                                "URL deleted successfully",
+                                "success",
+                            );
+                            fetchUserUrls();
+                        } catch (error) {
+                            showNotification(
+                                error.message || "Failed to delete URL",
+                                "error",
+                            );
+                        }
+                    });
+
+                return urlItem;
+            }
+
+            // Logout
+            logoutBtn.addEventListener("click", () => {
+                localStorage.removeItem("token");
+                token = null;
+                showAuthView();
+                showNotification("Logged out successfully", "success");
+            });
+        </script>
+    </body>
+</html>

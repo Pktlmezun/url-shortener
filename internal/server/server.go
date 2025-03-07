@@ -3,22 +3,23 @@ package server
 import (
 	"database/sql"
 	"fmt"
-	"github.com/gocql/gocql"
-	"github.com/sirupsen/logrus"
+
 	"net/http"
 	"url-shortener/internal/api"
 	"url-shortener/internal/handlers"
 	"url-shortener/internal/repositories"
 	"url-shortener/internal/services"
+
+	"github.com/sirupsen/logrus"
 )
 
-func StartSever(port string, db *sql.DB, session *gocql.Session, logger *logrus.Logger) {
+func StartSever(port string, db *sql.DB, logger *logrus.Logger) {
 
 	userRepo := repositories.NewUserRepository(db, logger)
 	userService := services.NewUserService(userRepo, logger)
 	userHandler := handlers.NewUserHandler(userService, logger)
 
-	URLRepo := repositories.NewURLRepository(session, logger, db)
+	URLRepo := repositories.NewURLRepository(logger, db)
 	URLService := services.NewURLService(URLRepo, logger, db)
 	URLHandler := handlers.NewURLHandler(URLService, logger)
 

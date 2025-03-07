@@ -2,14 +2,17 @@ package api
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"url-shortener/internal/handlers"
+
+	"github.com/sirupsen/logrus"
 )
 
 func SetupRouter(userHandler *handlers.UserHandler, urlHandler *handlers.URLHandler, logger *logrus.Logger) http.Handler {
 	mux := http.NewServeMux()
+
+	mux.Handle("/", http.FileServer(http.Dir("./static")))
 
 	mux.HandleFunc("/signup", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {

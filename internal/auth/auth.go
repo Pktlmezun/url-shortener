@@ -3,14 +3,15 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"os"
 	"time"
 	"url-shortener/pkg/models"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func ValidatePassword(hashedPassword, password string) error {
@@ -72,7 +73,6 @@ func DecodeUser(r *http.Request, logger *logrus.Logger) (models.User, error) {
 		logrus.Error("error while decoding request body")
 		return models.User{}, err
 	}
-	logger.Info("Successfully decoded user model")
 	return user, nil
 }
 
